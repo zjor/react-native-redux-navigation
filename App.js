@@ -17,7 +17,7 @@ class HomeScreen extends React.Component {
     const { navigate } = this.props.navigation
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Text>Home Screen</Text>
+        <Text>Home Screen: {this.props.screenProps.text}</Text>
         <Button
           title="Open Details"
           onPress={() => navigate('Details')}
@@ -27,9 +27,13 @@ class HomeScreen extends React.Component {
   }
 }
 
-const DetailsScreen = () => (
+const DetailsScreen = ({ screenProps }) => (
   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
     <Text>Details Screen</Text>
+    <Button
+      title="Update Text"
+      onPress={() => screenProps.setText("new text to be set")}
+    />
   </View>
 )
 
@@ -50,24 +54,47 @@ const nav = (state = initailState, action) => {
   return nextState || state
 }
 
+const textReducer = (state = 'Hello World!', action) => {
+  console.log('TextReducer called', state, action)
+  switch (action.type) {
+    case 'set_text':
+      return action.data
+    default:
+      return state
+  }
+}
+
 const appReducer = combineReducers({
-  nav
+  nav,
+  text: textReducer
 })
 
-const AppWithNavigationState = ({ dispatch, nav }) => (
-  <RootNavigator navigation={addNavigationHelpers({ dispatch, state: nav })} />
-)
+class AppWithNavigationState extends React.Component {
+  render() {
+    console.log('AppWithNavigationState: ', this.props, this.state)    
+    const { dispatch, nav } = this.props
+    return (
+      <RootNavigator screenProps={this.props} {...this.props} />
+    )
+  }
+}
 
 AppWithNavigationState.propTypes = {
   dispatch: PropTypes.func.isRequired,
   nav: PropTypes.object.isRequired,
 }
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   nav: state.nav,
+  text: state.text //?
 })
 
-ReduxAppWithNavigationState = connect(mapStateToProps)(AppWithNavigationState)
+const mapDispatchToProps = (dispatch) => ({
+      setText: (data) => dispatch({ type: 'set_text', data}),
+      dispatch
+})
+
+ReduxAppWithNavigationState = connect(mapStateToProps, mapDispatchToProps)(AppWithNavigationState)
 
 export default class App extends React.Component {
   render() {
